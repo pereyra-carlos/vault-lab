@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  vault:
+    image: vault:1.13.3
+    container_name: vault
+    ports:
+      - 8201:8201
+    environment:
+      VAULT_ADDR: "http://127.0.0.1:8201"
+      # in production scenarios the token mechanism for logging will be forbidden,
+      # it cannot be in source control.
+      VAULT_TOKEN: "vault-distribt-token" # to be able to use the CLI on dev
+      VAULT_DEV_ROOT_TOKEN_ID: "vault-distribt-token"
+      VAULT_LOCAL_CONFIG: >
+        {
+          "storage": { "file": { "path": "/vault/file" }},
+          "listener": [{ "tcp": { "address": "0.0.0.0:8201", "tls_disable": true }}],
+          "default_lease_ttl": "168h",
+          "max_lease_ttl": "720h",
+          "ui": true
+        }
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./data:/vault/data
+      #- ./config:/vault/config
+    #command: server -config=/vault/config/vault-config.hcl
+    command: server -dev
+
+networks:
+  default:
+    driver: bridge
